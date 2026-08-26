@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARROW HUNT</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #203a24;
+  color: white;
+}
+
+#game {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    linear-gradient(#79a85c 0%, #466f3d 45%, #203c24 100%);
+}
+
+/* Forest */
+.trees {
+  position: absolute;
+  inset: 0;
+  font-size: 55px;
+  line-height: 1.4;
+  opacity: .7;
+  pointer-events: none;
+}
+
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  text-align: center;
+  background: rgba(10,25,12,.75);
+  z-index: 10;
+}
+
+h1 {
+  margin: 0 0 5px;
+  font-size: 26px;
+}
+
+.stats {
+  font-size: 17px;
+}
+
+/* Target */
+#target {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #76502f;
+  border: 8px solid #422918;
+  z-index: 3;
+}
+
+.ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+.white1 {
+  width: 170px;
+  height: 170px;
+  background: white;
+}
+
+.red1 {
+  width: 120px;
+  height: 120px;
+  background: #d83232;
+}
+
+.white2 {
+  width: 70px;
+  height: 70px;
+  background: white;
+}
+
+.bullseye {
+  width: 30px;
+  height: 30px;
+  background: #d83232;
+}
+
+/* Aim */
+#aim {
+  position: absolute;
+  left: 20%;
+  top: 55%;
+  width: 55px;
+  height: 55px;
+  border: 3px solid white;
+  border-radius: 50%;
+  color: white;
+  font-size: 38px;
+  line-height: 47px;
+  text-align: center;
+  z-index: 6;
+  touch-action: none;
+  text-shadow: 0 0 5px black;
+}
+
+/* Arrow */
+#arrow {
+  display: none;
+  position: absolute;
+  z-index: 5;
+  font-size: 38px;
+}
+
+/* Fire */
+#fire {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 175px;
+  height: 55px;
+  border: 0;
+  border-radius: 15px;
+  font-size: 22px;
+  font-weight: bold;
+  z-index: 10;
+}
+
+#message {
+  position: absolute;
+  bottom: 82px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  z-index: 10;
+  text-shadow: 0 1px 4px black;
+}
+
+#again {
+  display: none;
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  height: 55px;
+  border: 0;
+  border-radius: 15px;
+  font-size: 20px;
+  z-index: 11;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+  <div class="trees">
+    🌲 🌳 🌲 🌲 🌳 🌲<br>
+    🌳 🌲 🌲 🌳 🌲 🌳<br>
+    🌲 🌳 🌲 🌲 🌳 🌲
+  </div>
+
+  <div class="hud">
+    <h1>🏹 ARROW HUNT</h1>
+    <div class="stats">
+      🎯 Score: <b id="score">0</b>
+      &nbsp; 🔥 Combo: <b id="combo">0</b>
+      &nbsp; ⏱️ <b id="time">30</b>
+    </div>
+  </div>
+
+  <div id="target">
+    <div class="ring white1"></div>
+    <div class="ring red1"></div>
+    <div class="ring white2"></div>
+    <div class="ring bullseye"></div>
+  </div>
+
+  <div id="aim">⊕</div>
+
+  <div id="arrow">➳</div>
+
+  <div id="message">
+    Drag the aim and FIRE!
+  </div>
+
+  <button id="fire">🏹 FIRE</button>
+
+  <button id="again">🔄 PLAY AGAIN</button>
+
+</div>
+
+<script>
+
+let score = 0;
+let combo = 0;
+let time = 30;
+let playing = true;
+let dragging = false;
+
+const game = document.getElementById("game");
+const aim = document.getElementById("aim");
+const target = document.getElementById("target");
+const arrow = document.getElementById("arrow");
+
+const fire = document.getElementById("fire");
+const again = document.getElementById("again");
+
+const scoreText = document.getElementById("score");
+const comboText = document.getElementById("combo");
+const timeText = document.getElementById("time");
+const message = document.getElementById("message");
+
+
+/* Move aim */
+
+aim.addEventListener("pointerdown", function(e) {
+
+  if (!playing) return;
+
+  dragging = true;
+
+  aim.setPointerCapture(e.pointerId);
+
+});
+
+
+aim.addEventListener("pointermove", function(e) {
+
+  if (!dragging || !playing) return;
+
+  const rect = game.getBoundingClientRect();
+
+  let x = e.clientX - rect.left - 27;
+  let y = e.clientY - rect.top - 27;
+
+  x = Math.max(0, Math.min(rect.width - 55, x));
+
+  y = Math.max(105, Math.min(rect.height - 125, y));
+
+  aim.style.left = x + "px";
+  aim.style.top = y + "px";
+
+});
+
+
+aim.addEventListener("pointerup", function() {
+
+  dragging = false;
+
+});
+
+
+/* Fire */
+
+fire.addEventListener("click", function() {
+
+  if (!playing) return;
+
+  const a = aim.getBoundingClientRect();
+  const t = target.getBoundingClientRect();
+
+  const ax = a.left + a.width / 2;
+  const ay = a.top + a.height / 2;
+
+  const tx = t.left + t.width / 2;
+  const ty = t.top + t.height / 2;
+
+  const distance = Math.sqrt(
+    Math.pow(ax - tx, 2) +
+    Math.pow(ay - ty, 2)
+  );
+
+
+  /* Arrow animation */
+
+  arrow.style.display = "block";
+
+  arrow.style.left = ax - 18 + "px";
+  arrow.style.top = ay - 18 + "px";
+
+  setTimeout(function() {
+
+    arrow.style.left = tx - 18 + "px";
+    arrow.style.top = ty - 18 + "px";
+
+  }, 30);
+
+
+  setTimeout(function() {
+
+    arrow.style.display = "none";
+
+
+    /* Perfect */
+
+    if (distance <= 22) {
+
+      combo++;
+
+      score += 10;
+
+      message.textContent = "🎯 PERFECT! +10";
+
+
+      /* Every 3 perfect hits */
+
+      if (combo % 3 === 0) {
+
+        score += 30;
+
+        message.textContent =
+          "🔥 " + combo + " HIT BONUS! +30";
+
+      }
+
+    }
+
+
+    /* Good */
+
+    else if (distance <= 55) {
+
+      combo = 0;
+
+      score += 5;
+
+      message.textContent = "🟡 GOOD HIT! +5";
+
+    }
+
+
+    /* Hit */
+
+    else if (distance <= 90) {
+
+      combo = 0;
+
+      score += 2;
+
+      message.textContent = "🟠 HIT! +2";
+
+    }
+
+
+    /* Miss */
+
+    else {
+
+      combo = 0;
+
+      message.textContent = "❌ MISS!";
+
+    }
+
+
+    scoreText.textContent = score;
+
+    comboText.textContent = combo;
+
+  }, 220);
+
+});
+
+
+/* Timer */
+
+const timer = setInterval(function() {
+
+  if (!playing) return;
+
+  time--;
+
+  timeText.textContent = time;
+
+
+  if (time <= 0) {
+
+    clearInterval(timer);
+
+    playing = false;
+
+    aim.style.display = "none";
+
+    fire.style.display = "none";
+
+    message.textContent =
+      "🏆 TIME UP! Score: " + score;
+
+    again.style.display = "block";
+
+  }
+
+}, 1000);
+
+
+/* Restart */
+
+again.addEventListener("click", function() {
+
+  location.reload();
+
+});
+
+</script>
+
+</body>
+</html>

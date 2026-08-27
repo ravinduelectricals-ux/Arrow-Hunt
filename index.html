@@ -167,7 +167,7 @@ z-index:9;
 position:absolute;
 
 left:50%;
-bottom:60px;
+bottom:160px;
 
 width:230px;
 
@@ -227,7 +227,7 @@ color:#333;
 
 position:absolute;
 
-bottom:80px;
+bottom:110px;
 
 left:50%;
 
@@ -296,7 +296,7 @@ display:none;
 
 position:absolute;
 
-bottom:18px;
+bottom:110px;
 
 left:50%;
 
@@ -507,14 +507,29 @@ dragging=false;
 
 function updateAim(){
 
-aimLine.style.transform=
+    aimLine.style.transform =
+        "rotate("+(-angle)+"deg)";
 
-"rotate("+(-angle)+"deg)";
+    const gameRect = game.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
 
-arrow.style.transform=
+    const startX = gameRect.width / 2;
+    const startY = gameRect.height - 145;
 
-"rotate("+(angle)+"deg)";
+    const targetX =
+        targetRect.left + targetRect.width / 2;
 
+    const targetY =
+        targetRect.top + targetRect.height / 2;
+
+    const dx = targetX - startX;
+    const dy = targetY - startY;
+
+    const targetAngle =
+        Math.atan2(dy, dx) * 180 / Math.PI;
+
+    arrow.style.transform =
+        "rotate("+targetAngle+"deg) rotate("+angle+"deg)";
 }
 
 
